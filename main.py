@@ -2,15 +2,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from database import init_db
-from routers import logs
-# 未來： from routers import habits
+from routers import logs, habits  # <--- 新增 habits
 
 app = FastAPI()
 
-# 初始化資料庫
+# 初始化資料庫 (會自動建立新表)
 init_db()
 
-# 允許跨域
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -18,11 +16,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 掛載 API 路由
+# 掛載路由
 app.include_router(logs.router)
-# 未來： app.include_router(habits.router)
+app.include_router(habits.router) # <--- 掛載原子習慣 API
 
-# 掛載靜態檔案 (前端)
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 if __name__ == "__main__":

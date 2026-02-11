@@ -17,17 +17,28 @@ window.onload = async () => {
     const localDate = (new Date(now - offset)).toISOString().split('T')[0];
     document.getElementById('date-picker').value = localDate;
 
-    await loadDateLogs(localDate);
+    // 平行載入日誌與原子習慣 (這是 Phase 2 新增的關鍵邏輯)
+    await Promise.all([
+        loadDateLogs(localDate),
+        initHabits(localDate)
+    ]);
 };
 
-// --- 主要邏輯 ---
+// --- 日期切換邏輯 ---
 
 async function handleDateChange(newDate) {
     if (isLoading) return;
     if (isModified && !confirm("尚未儲存，確定要切換日期嗎？")) return;
     isModified = false;
-    await loadDateLogs(newDate);
+
+    // 同步更新日誌與習慣
+    await Promise.all([
+        loadDateLogs(newDate),
+        initHabits(newDate)
+    ]);
 }
+
+// --- 日誌載入邏輯 ---
 
 async function loadDateLogs(date) {
     if (isLoading || !container) return;
@@ -36,13 +47,17 @@ async function loadDateLogs(date) {
 
     try {
         const data = await apiGetLog(date); // 使用 api.js
+
+        // Console Log 用於除錯，確認後端有回傳資料
+        console.log("📅 Date:", date, "📦 Data:", data);
+
         container.innerHTML = "";
         if (data.status === "success" && data.items.length > 0) {
             for (const it of data.items) {
                 await addNewItem(it.title, it.content, it.isDone, it.tags);
             }
         } else {
-            addNewItem();
+            addNewItem(); // 無資料時新增一筆空白
         }
         isModified = false;
     } catch (e) {
@@ -52,6 +67,8 @@ async function loadDateLogs(date) {
         isLoading = false;
     }
 }
+
+// --- 儲存邏輯 ---
 
 async function saveToBackend() {
     const date = document.getElementById('date-picker').value;
@@ -72,13 +89,12 @@ async function saveToBackend() {
     } catch (e) { alert('儲存失敗'); }
 }
 
-// --- UI 組件渲染 ---
+// --- UI 組件渲染 (新增卡片) ---
 
 async function addNewItem(title = "", content = "", isDone = false, tags = "") {
     const itemDiv = document.createElement('div');
     itemDiv.className = `group bg-white rounded-3xl shadow-sm border border-gray-100 p-6 transition-all ${isDone ? 'completed' : ''}`;
 
-    // HTML 結構生成
     itemDiv.innerHTML = `
         <div class="flex items-start gap-4">
             <div class="drag-handle mt-2 text-gray-200 hover:text-gray-400 cursor-grab transition-colors"><i class="fa-solid fa-bars"></i></div>
@@ -112,6 +128,8 @@ async function addNewItem(title = "", content = "", isDone = false, tags = "") {
     }
 }
 
+// --- 專案歷史儀表板 ---
+
 async function renderHistory(cardEl, title, tags) {
     const dashboard = cardEl.querySelector('.project-dashboard');
     const timeline = cardEl.querySelector('.history-timeline-container');
@@ -119,7 +137,7 @@ async function renderHistory(cardEl, title, tags) {
     const todayDate = document.getElementById('date-picker').value;
 
     try {
-        const data = await apiGetProjectHistory(title, tags); // 使用 api.js
+        const data = await apiGetProjectHistory(title, tags);
         if (data.status === "success" && data.history.length > 0) {
             const pastHistory = data.history.filter(h => h.date !== todayDate);
             if (pastHistory.length > 0) {
@@ -146,7 +164,8 @@ function toggleDone(btn) {
     isModified = true;
 }
 
-// --- 抽屜邏輯 ---
+// --- 足跡回顧抽屜 (History Drawer) ---
+
 async function openDrawer() {
     document.getElementById('history-drawer').classList.remove('translate-x-full');
     document.getElementById('drawer-overlay').classList.replace('opacity-0', 'opacity-30');
@@ -160,7 +179,6 @@ function closeDrawer() {
     document.getElementById('drawer-overlay').classList.add('pointer-events-none');
 }
 
-// --- [關鍵修復] 完整的歷史回顧渲染函數 ---
 async function refreshHistoryFeed() {
     const feed = document.getElementById('history-feed');
     feed.innerHTML = '<div class="text-center text-gray-300 mt-20"><i class="fa-solid fa-spinner fa-spin text-xl"></i></div>';
@@ -177,10 +195,8 @@ async function refreshHistoryFeed() {
                     const task = document.createElement('div');
                     task.className = "bg-white p-4 rounded-xl shadow-sm border border-gray-50 mb-3 group/hist relative hover:border-blue-100 transition-all";
 
-                    // 1. 生成標籤 HTML
                     const tagChips = it.tags ? it.tags.split(' ').map(tag => `<span class="bg-blue-50 text-blue-300 text-[9px] px-1.5 py-0.5 rounded-md mr-1">#${tag}</span>`).join('') : '';
 
-                    // 2. 完整的卡片內容 (包含內容顯示與按鈕)
                     task.innerHTML = `
                         <div class="flex items-start gap-3">
                             <div class="mt-1">${it.isDone ? '<i class="fa-check-circle text-green-400"></i>' : '<i class="fa-dot-circle text-amber-300"></i>'}</div>

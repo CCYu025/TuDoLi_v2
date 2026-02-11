@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Logger - Modular</title>
+    <title>Daily Logger - Atomic Habits</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -12,24 +12,75 @@
 <body class="bg-gray-50 min-h-screen pb-20 font-sans text-gray-900">
 
     <div class="max-w-xl mx-auto p-4">
-        <div class="sticky top-0 bg-gray-50/80 backdrop-blur-md z-10 py-4 mb-8 flex justify-between items-center border-b">
-            <div class="flex items-center gap-4">
-                <input type="date" id="date-picker" onchange="handleDateChange(this.value)" class="bg-transparent font-black text-2xl outline-none text-gray-800">
-                <button onclick="openDrawer()" class="text-blue-600 hover:text-blue-800 text-sm font-bold flex items-center gap-1">
-                    <i class="fa-solid fa-shoe-prints"></i> 足跡回顧
-                </button>
+        <div class="sticky top-0 bg-gray-50/80 backdrop-blur-md z-10 py-4 mb-8 border-b border-gray-200">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center gap-4">
+                    <input type="date" id="date-picker" onchange="handleDateChange(this.value)" class="bg-transparent font-black text-2xl outline-none text-gray-800">
+                    <button onclick="openAppMenu()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                </div>
+
+                <div class="flex gap-2">
+                    <button onclick="openDrawer()" class="text-blue-600 hover:text-blue-800 text-sm font-bold flex items-center gap-1 mr-2">
+                        <i class="fa-solid fa-shoe-prints"></i>
+                    </button>
+                    <button onclick="saveToBackend()" class="bg-blue-600 text-white px-5 py-2 rounded-xl hover:bg-blue-700 shadow-lg flex items-center gap-2 transition-all active:scale-95 text-sm font-bold">
+                        <i class="fa-solid fa-save"></i>
+                    </button>
+                </div>
             </div>
-            <button onclick="saveToBackend()" class="bg-blue-600 text-white px-6 py-2 rounded-xl hover:bg-blue-700 shadow-lg flex items-center gap-2 transition-all active:scale-95">
-                <i class="fa-solid fa-save"></i> 儲存
-            </button>
+
+            <div id="habit-bar-container" class="flex items-center min-h-[40px]"></div>
         </div>
 
         <div id="todo-container" class="space-y-6"></div>
 
         <button onclick="addNewItem()" class="w-full mt-12 py-12 border-2 border-dashed border-gray-200 rounded-3xl flex flex-col items-center justify-center text-gray-300 hover:border-blue-300 hover:text-blue-400 transition-all bg-white/30">
             <i class="fa-solid fa-plus text-2xl mb-1"></i>
-            <span class="text-xs font-black uppercase tracking-widest">New Entry</span>
         </button>
+    </div>
+
+    <div id="app-menu-drawer" class="fixed top-0 left-0 h-full w-20 bg-white shadow-2xl transform -translate-x-full transition-transform duration-300 z-50 border-r flex flex-col items-center py-8">
+        <div class="mb-8 text-gray-300"><i class="fa-solid fa-cube text-xl"></i></div>
+        <div class="space-y-4 w-full px-2">
+            <button onclick="openHabitSettings()" class="w-full aspect-square rounded-2xl bg-blue-50 text-blue-500 hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center shadow-sm">
+                <i class="fa-solid fa-atom text-xl"></i>
+            </button>
+            <div class="w-full aspect-square rounded-2xl bg-gray-50 text-gray-300 flex items-center justify-center cursor-not-allowed">
+                <i class="fa-solid fa-chart-pie"></i>
+            </div>
+        </div>
+    </div>
+    <div id="app-menu-overlay" onclick="closeAppMenu()" class="fixed inset-0 bg-black opacity-0 pointer-events-none transition-opacity duration-300 z-40"></div>
+
+    <div id="habit-settings-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center">
+        <div class="absolute inset-0 bg-gray-900/20 backdrop-blur-sm transition-all" onclick="closeHabitSettings()"></div>
+
+        <div class="relative bg-white w-full max-w-md mx-4 rounded-3xl shadow-2xl overflow-hidden modal-enter flex flex-col max-h-[85vh]">
+
+            <div class="p-4 bg-white border-b border-gray-100 z-20 flex gap-3 items-center shadow-sm relative">
+                <div class="relative w-8 h-8 rounded-full overflow-hidden flex-shrink-0 cursor-pointer shadow-sm ring-1 ring-gray-100">
+                    <input type="color" id="new-habit-color" value="#3B82F6" class="absolute -top-2 -left-2 w-16 h-16 cursor-pointer border-none p-0">
+                </div>
+                <input type="text" id="new-habit-title" placeholder="Type name..." class="flex-grow text-sm bg-transparent border-none outline-none text-gray-700 placeholder-gray-300 font-bold h-10">
+                <button onclick="handleAddGroup()" class="w-8 h-8 rounded-full text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-all flex items-center justify-center" title="New Chain">
+                    <i class="fa-solid fa-link"></i>
+                </button>
+                <button onclick="handleAddHabit()" class="w-8 h-8 rounded-full bg-gray-800 text-white hover:bg-black transition-all flex items-center justify-center shadow-md active:scale-95">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+
+            <div id="chain-container" class="bg-gray-50/50 border-b border-gray-100 z-10 overflow-y-auto custom-scrollbar flex-shrink-0 max-h-[30vh] empty:hidden transition-all duration-300">
+                </div>
+
+            <div class="flex-grow overflow-y-auto p-4 custom-scrollbar bg-white relative">
+                <div id="habit-settings-list" class="space-y-2 pb-10">
+                    </div>
+                <div class="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
+            </div>
+        </div>
     </div>
 
     <div id="history-drawer" class="fixed top-0 right-0 h-full w-96 bg-white shadow-2xl transform translate-x-full transition-transform duration-300 z-50 border-l flex flex-col">
@@ -38,13 +89,14 @@
             <button onclick="closeDrawer()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-times text-2xl"></i></button>
         </div>
         <div class="p-4 border-b">
-            <input type="text" id="history-search" oninput="filterHistory(this.value)" placeholder="搜尋..." class="w-full text-xs border rounded-xl px-4 py-2 bg-gray-50">
+            <input type="text" id="history-search" oninput=\"filterHistory(this.value)\" placeholder="搜尋..." class="w-full text-xs border rounded-xl px-4 py-2 bg-gray-50">
         </div>
         <div id="history-feed" class="flex-grow overflow-y-auto bg-gray-50 p-4 space-y-6 custom-scrollbar"></div>
     </div>
     <div id="drawer-overlay" onclick="closeDrawer()" class="fixed inset-0 bg-black opacity-0 pointer-events-none transition-opacity duration-300 z-40"></div>
 
     <script src="js/api.js"></script>
+    <script src="js/habit_mod.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>
