@@ -1,0 +1,27 @@
+# Python 編譯檔
+__pycache__/
+*.pyc
+
+# 虛擬環境
+.venv/
+venv/
+env/
+
+# IDE 設定檔 (PyCharm / VSCode)
+.idea/
+.vscode/
+
+# 資料庫 (個資，絕對不要上傳！)
+*.db
+work_logs.db
+work_logs.db-journal
+
+# 自動備份區
+backups/
+
+# 作業系統產生的垃圾檔
+.DS_Store
+Thumbs.db
+
+# 個人檔案
+技術文件.txt
