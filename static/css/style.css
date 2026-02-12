@@ -1,19 +1,103 @@
 /* static/css/style.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
 
-/* --- 基礎樣式 (保持不變) --- */
-.ghost { opacity: 0.4; background: #ebf8ff; border: 2px dashed #4299e1; }
-.completed { background-color: #f9fafb !important; border-color: #f3f4f6 !important; opacity: 0.8; }
-.completed .project-title, .completed .tag-input, .completed textarea { color: #9ca3af !important; pointer-events: none; }
-.completed .fa-check-circle { color: #10b981 !important; }
-.completed .project-dashboard { opacity: 0.5; }
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f8fafc;
+}
+
+/* 滾動條美化 */
 .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+
+/* 拖拽佔位符 */
+.ghost { opacity: 0.4; background: #ebf5ff; border: 2px dashed #3b82f6; border-radius: 16px; }
+
+
+/* =========================================
+   🚀 第一部分：日誌系統與標籤 (New Features)
+   包含：標籤膠囊、日誌卡片變身動畫
+   ========================================= */
+
+/* 1. 標籤膠囊動畫 */
+@keyframes capsulePop {
+    0% { transform: scale(0.9); opacity: 0; }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.tag-container {
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    background: rgba(241, 245, 249, 0.6); padding: 4px 10px;
+    border-radius: 12px; min-height: 32px; transition: all 0.2s;
+    border: 1px solid transparent; margin-top: 8px;
+}
+.tag-container:focus-within { background: #ffffff; border-color: #e2e8f0; }
+
+.tag-capsule {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: #3b82f6; color: #ffffff;
+    font-size: 10px; font-weight: 800; padding: 3px 10px;
+    border-radius: 99px;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+    animation: capsulePop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: default;
+}
+.tag-capsule .delete-tag { cursor: pointer; opacity: 0.7; transition: transform 0.2s; }
+.tag-capsule .delete-tag:hover { opacity: 1; transform: scale(1.2); }
+
+.ghost-tag-input {
+    background: transparent; border: none !important; outline: none !important;
+    padding: 0 !important; font-size: 11px; font-weight: 700; color: #64748b; flex-grow: 1; min-width: 60px;
+}
+
+/* 2. 核心修復：日誌卡片變身膠囊 (Task Card Morphing) */
+/* 預設卡片狀態 */
+.task-card {
+    background: white; border-radius: 24px; padding: 24px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid #f1f5f9;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+.task-card:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); transform: translateY(-2px); }
+
+/* ✅ 完成狀態：強制變身為膠囊 (Strong Fix) */
+.task-card.completed {
+    padding: 12px 24px !important;
+    border-radius: 99px !important;
+    background-color: #f8fafc !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    max-height: 60px !important;
+}
+
+/* 修正內層 Flex 結構 */
+.task-card.completed > div { align-items: center !important; height: 100% !important; }
+
+/* 強制隱藏元素 */
+.task-card.completed .tag-container,
+.task-card.completed textarea,
+.task-card.completed .project-dashboard,
+.task-card.completed .drag-handle {
+    display: none !important; opacity: 0 !important; height: 0 !important; margin: 0 !important; padding: 0 !important;
+}
+
+/* 標題與按鈕調整 */
+.task-card.completed .project-title {
+    font-size: 14px !important; color: #94a3b8 !important; text-decoration: line-through; margin: 0 !important; pointer-events: none;
+}
+.task-card.completed .action-btn-group { flex-direction: row !important; gap: 10px !important; }
+
+/* 歷史時間軸 */
 .timeline-line::before { content: ''; position: absolute; left: 7px; top: 10px; bottom: 0; width: 1px; background-color: #e5e7eb; }
 .history-item:last-child .timeline-line::before { display: none; }
-.history-card { animation: slideIn 0.3s ease-out forwards; }
-@keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
 
-/* --- 原子習慣 (主畫面) --- */
+
+/* =========================================
+   ⚛️ 第二部分：原子習慣模組 (Atomic Habits)
+   (已完全還原為你提供的版本，確保顏色與樣式正確)
+   ========================================= */
 #app-menu-drawer { box-shadow: 10px 0 30px rgba(0,0,0,0.1); }
 .backdrop-blur-md { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
 .modal-enter { animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
@@ -56,6 +140,7 @@
 .habit-done .habit-icon { color: white; }
 .habit-done .habit-label { font-size: 11px; opacity: 1; width: auto; margin-left: 8px; }
 
+/* 這裡就是顏色顯示的關鍵，我之前遺漏了 */
 .habit-group-container .habit-done { background-color: var(--habit-color) !important; color: white !important; }
 .habit-group-container .habit-done .habit-icon { background-color: rgba(255,255,255,0.2) !important; }
 .habit-group-container .habit-done .habit-label { color: white !important; }
@@ -68,90 +153,49 @@
 .lightning-btn.active { color: #fbbf24; text-shadow: 0 0 15px rgba(251, 191, 36, 0.8); }
 
 /* --- 設定頁面 (托盤化 + 大目標優化) --- */
-
 #chain-container { padding: 0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 #chain-container:not(:empty) { padding: 16px; box-shadow: inset 0 -4px 6px -4px rgba(0,0,0,0.05); }
 
-/* 群組盒子 (Dropzone) - 變成橫向托盤 */
 .habit-setting-group {
-    background-color: white;
-    border: 2px dashed #e5e7eb;
-    border-radius: 16px;
-    padding: 12px; /* 增加內距 */
-    margin-bottom: 8px;
-    position: relative;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    align-items: center;
-    /* [重點修改] 增加最小高度，讓它成為一個容易丟進去的目標 */
-    min-height: 80px;
-    align-content: flex-start; /* 讓內容靠上，不要垂直置中 */
-    transition: all 0.2s;
+    background-color: white; border: 2px dashed #e5e7eb; border-radius: 16px; padding: 12px;
+    margin-bottom: 8px; position: relative; display: flex; flex-wrap: wrap; gap: 6px;
+    align-items: center; min-height: 80px; align-content: flex-start; transition: all 0.2s;
 }
 
-/* [新增] 當它是空的時，顯示引導文字 */
 .habit-setting-group.empty-chain::after {
-    content: 'Drop items here';
-    position: absolute;
-    top: 50%; left: 50%; transform: translate(-50%, -50%);
-    color: #e5e7eb;
-    font-size: 12px;
-    font-weight: 700;
-    pointer-events: none;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    content: 'Drop items here'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    color: #e5e7eb; font-size: 12px; font-weight: 700; pointer-events: none; text-transform: uppercase; letter-spacing: 1px;
 }
 
 .habit-setting-group:last-child { margin-bottom: 0; }
 .habit-setting-group:hover { border-color: #d1d5db; background-color: #f9fafb; }
 
-/* 拖曳時的目標高亮 */
 .habit-setting-group.sortable-ghost {
-    border-color: #3b82f6;
-    background-color: #eff6ff;
-    transform: scale(1.02);
-    /* 拖曳進去時，隱藏引導文字 */
+    border-color: #3b82f6; background-color: #eff6ff; transform: scale(1.02);
 }
 .habit-setting-group.sortable-ghost::after { display: none; }
 
-/* 刪除按鈕 (浮動) */
 .group-delete-btn {
-    position: absolute; top: -8px; right: -8px;
-    width: 24px; height: 24px; border-radius: 50%;
-    background-color: white; border: 1px solid #fee2e2; color: #fca5a5;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px; opacity: 0; transition: all 0.2s; cursor: pointer; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; border-radius: 50%;
+    background-color: white; border: 1px solid #fee2e2; color: #fca5a5; display: flex;
+    align-items: center; justify-content: center; font-size: 12px; opacity: 0;
+    transition: all 0.2s; cursor: pointer; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 .habit-setting-group:hover .group-delete-btn { opacity: 1; }
 .group-delete-btn:hover { background-color: #fee2e2; color: #ef4444; transform: scale(1.1); }
 
-/* 單個習慣項目 (在池子裡是長條) */
 .habit-setting-item {
-    display: flex; justify-content: space-between; align-items: center;
-    background-color: white; padding: 10px 14px; /* 稍微加大一點好按 */
-    border-radius: 12px; border: 1px solid #f3f4f6; margin-bottom: 6px;
+    display: flex; justify-content: space-between; align-items: center; background-color: white;
+    padding: 10px 14px; border-radius: 12px; border: 1px solid #f3f4f6; margin-bottom: 6px;
     cursor: grab; transition: transform 0.1s;
 }
 .habit-setting-item:active { cursor: grabbing; border-color: #bfdbfe; }
 .habit-setting-item:hover { border-color: #e5e7eb; transform: translateX(2px); }
 
-/* --- 變身魔法：當習慣在群組托盤裡時 --- */
 .habit-setting-group .habit-setting-item {
-    padding: 4px;
-    border-radius: 99px; /* 變圓 */
-    background-color: #f9fafb;
-    border: 1px solid transparent;
-    margin-bottom: 0;
-    box-shadow: none;
-    width: auto;
-    flex-grow: 0;
-    z-index: 5; /* 確保在引導文字之上 */
+    padding: 4px; border-radius: 99px; background-color: #f9fafb; border: 1px solid transparent;
+    margin-bottom: 0; box-shadow: none; width: auto; flex-grow: 0; z-index: 5;
 }
-
-/* 在托盤裡隱藏刪除按鈕 (物理移出原則) */
 .habit-setting-group .habit-setting-item .item-actions { display: none !important; }
-
-/* 在托盤裡縮小文字與 Icon (仿膠囊樣式) */
 .habit-setting-group .habit-setting-item .item-icon-wrapper { width: 24px; height: 24px; font-size: 10px; }
 .habit-setting-group .habit-setting-item .item-title { font-size: 11px; margin-right: 8px; max-width: 100px; }

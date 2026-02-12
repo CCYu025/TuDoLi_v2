@@ -1,51 +1,63 @@
-# Daily Logger - 增量型專案日誌與原子習慣系統
+# Daily Logger - 增量型專案日誌與原子習慣系統 (v2.2)
 
-這是一個基於 Python (FastAPI) + SQLite + Vanilla JS 開發的個人生產力工具。
-專為追求「極簡操作」與「長期行為追蹤」的專業人士設計。結合了**增量儲存日誌**與**原子習慣堆疊**兩大核心模組。
+這是一個專為開發者與高效能人士設計的「心智輔助系統」。
+結合了 **Python (FastAPI)** 的高效後端與 **Vanilla JS** 的極簡物理感介面。本專案不僅是一個工具，更是對「極簡主義」與「資料完整性」的極致實踐。
 
-## 🚀 核心模組與特色
+## 🌟 核心開發進度：增量儲存與統一膠囊語言
 
-### 📝 專案日誌模組 (Daily Work Log) - **Enhanced!**
-* **UUID 增量更新 (True Incremental Sync)**：採用 UUID 識別每一筆紀錄。後端捨棄「全刪全插」模式，改用 UPSERT (Update or Insert) 邏輯，確保在高頻同步下資料依然絕對安全。
-* **無感自動儲存 (Debounced Auto-save)**：引入防抖機制（Debounce），在使用者停止輸入 1 秒後自動同步至資料庫。徹底移除傳統「儲存按鈕」，實現專注力零干擾。
-* **狀態指示燈 (Status UI)**：以去字化的「呼吸燈號」取代彈窗提醒，即時回饋「編輯中、同步中、已存檔」三種狀態。
-* **專案儀表板 (Project Dashboard)**：自動溯源歷史紀錄，以時間軸呈現專案脈絡，解決「完成即遺忘」的痛點。
-* **視覺化閱讀優化**：色彩弱化完成項與綠色勾勾標記，讓閱讀重心始終停留在「進行中」的任務。
+### 📝 增量型專案日誌 (Project Log 2.0)
+* **UUID 增量識別技術**：捨棄傳統「覆蓋式更新」，為每一筆紀錄配置唯一 UUID。後端採用 `UPSERT` 邏輯，即便在高頻率同步下，也能確保資料絕對不遺失。
+* **無感防抖自動儲存 (Zero-click Sync)**：實現「不用點擊儲存按鈕」的體驗。透過防抖 (Debounce) 機制，當使用者停止輸入 1.2 秒後，系統自動安靜地完成資料同步。
+* **狀態呼吸燈 (Sync Status UI)**：去字化設計。透過右上角的呼吸燈號（黃燈：編輯中 / 藍燈：同步中 / 綠燈：已存檔）即時回饋系統狀態。
+* **物理膠囊變身 (Morphing UI)**：
+    * **標籤膠囊化**：輸入標籤後按空白鍵或 Enter，文字會立即「砰」地一聲變身為可交互的物理膠囊。
+    * **任務變身動畫**：勾選完成後，卡片會自動收摺、變形為與「原子習慣」模組相同的窄長膠囊。實現全系統設計語彙統一。
+* **足跡回顧與專案繼承**：增強的歷史抽屜，支援「一鍵繼承 (Continue)」功能，讓過去的專案脈絡能無縫銜接到今天的任務中。
 
 ### ⚛️ 原子習慣模組 (Atomic Habits)
-* **融合膠囊 (Fusion Bar)**：首創「托盤化」堆疊設計。將多個習慣組合成「習慣鏈」，完成時會像能量條一樣展開，視覺化呈現行為的連續性。
-* **物理互動設定 (Physical UI)**：
-    * **托盤拖曳**：在設定視窗中將習慣「丟入」托盤即可完成組合，變身為小膠囊縮圖。
-    * **物理移出**：移除多餘按鈕，將習慣從托盤拖回池子即可解除組合，操作極度直覺。
-* **自動解散機制 (Auto-Dissolve)**：智慧判斷無效鏈條（如僅剩 1 個習慣），關閉視窗時自動歸類，維持介面極簡。
+* **融合膠囊 (Fusion Bar)**：首創托盤化堆疊設計。將多個習慣橫向堆疊成一組能量條，視覺化呈現行為的連續性。
+* **物理互動設定頁**：
+    * **托盤拖曳**：將習慣「丟入」托盤即可完成群組，變身縮圖。
+    * **自動解散機制**：智慧判斷無效群組（少於 2 項時），在關閉彈窗後自動還原，維持數據庫簡潔。
 
 ---
 
-## 🛠 技術棧 (Tech Stack)
-* **Backend**: FastAPI (Python 3.10+), SQLAlchemy/SQLite
-* **Frontend**: Vanilla JavaScript (ES6+), Tailwind CSS (CDN), Sortable.js
-* **Sync Logic**: UUID-based Upsert, Debounce Mechanism, Crypto API
-* **設計理念**：去字化 (Text-free) 介面，依賴圖樣與顏色對比提供直覺反饋。
+## 🛠 技術規格 (Technical Stack)
+
+* **後端 (Backend)**: 
+    * FastAPI (高效能異步框架)
+    * SQLAlchemy + SQLite (支援 UUID UNIQUE 索引與 UPSERT 衝突處理)
+* **前端 (Frontend)**:
+    * Vanilla JavaScript (ES6+)
+    * Tailwind CSS (極簡 UI 框架)
+    * Sortable.js (實現物理拖拽與磁吸感)
+* **核心邏輯**:
+    * 防抖儲存 (Debounced Persistence)
+    * DOM Morphing (狀態切換動畫)
+    * Incremental Sync (UUID 增量同步)
+
+---
+
+## 🎯 設計哲學 (Design Philosophy)
+
+1.  **極簡主義 (Minimalism)**：盡可能減少文字提示，依賴顏色、Icon 與物理直覺進行溝通。
+2.  **去字化 (Text-free Experience)**：讓介面呼吸，移除冗餘的按鈕與說明。
+3.  **絲滑體驗 (Frictionless)**：減少使用者的決策成本（例如不需要思考要不要存檔）。
+
+---
 
 ## 📦 安裝與啟動
-1. 安裝依賴：`pip install -r requirements.txt`
-2. 啟動伺服器：`python main.py`
-3. 訪問頁面：`http://127.0.0.1:8000`
+1.  `pip install -r requirements.txt`
+2.  `python main.py`
+3.  訪問 `http://127.0.0.1:8000`
 
 ## 📂 專案結構
 
-* `main.py`: 程式進入點與自動備份邏輯。
-* `database.py`: 資料庫連線與初始化（含 `habit_logs` 結構）。
-* `routers/`: 
-    * `logs.py`: 處理日誌增量儲存 API。
-    * `habits.py`: 處理習慣定義、狀態切換與 CRUD。
+* `main.py`
+* `database.py`
+* `routers/`
+    * `logs.py`
+    * `habits.py`
 * `static/`: 
-    * `js/habit_mod.js`: 處理複雜的托盤拖曳與膠囊渲染邏輯。
-    * `css/style.css`: 包含 Fusion Bar 與膠囊變身動畫。
-
-## 📅 未來計畫 (Phase 3)
-
-* [x] 實作「原子習慣」模組與托盤化介面。
-* [ ] **成就系統 (Gamefication)**：實作 XP 經驗值、能力值 (Focus, Discipline) 與等級系統。
-* [ ] **動態限制機制**：根據連續達成天數解鎖特殊介面主題或功能。
-* [ ] **視覺化趨勢圖**：加入 30 天打卡熱點圖 (Heatmap) 與連勝次數統計。
+    * `js/habit_mod.js`
+    * `css/style.css`
