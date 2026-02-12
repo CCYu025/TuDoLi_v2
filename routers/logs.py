@@ -1,13 +1,14 @@
 from fastapi import APIRouter, HTTPException
 from typing import Optional
-from database import get_db_connection, DB_NAME
+from database import get_db_connection
 from models import DayLog
 import sqlite3
+import uuid  # ✅ 新增：用於生成 UUID
 
 router = APIRouter(tags=["logs"])
 
 
-# --- 輔助函數：匯出 TXT ---
+# --- 輔助函數：匯出 TXT (保持不變) ---
 def export_month_to_txt(date_str: str):
     month_prefix = date_str[:7]
     filename = f"{date_str.replace('-', '')[:6]}.txt"
@@ -53,23 +54,68 @@ def export_month_to_txt(date_str: str):
 
 @router.post("/save-log")
 async def save_log(data: DayLog):
+    """
+    ✅ 增量儲存邏輯 (UPSERT):
+    1. 獲取或建立 daily_log ID
+    2. 遍歷前端傳來的 items:
+       - 有 item_id -> 更新 (UPSERT)
+       - 無 item_id -> 新增 (INSERT)
+    3. 刪除 '孤兒項目' (資料庫中有，但本次請求中沒有的項目)
+    """
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor()
+
+            # 1. 確保當日的 daily_log 存在並獲取 ID
             cursor.execute("INSERT OR IGNORE INTO daily_logs (log_date) VALUES (?)", (data.date,))
             cursor.execute("SELECT id FROM daily_logs WHERE log_date = ?", (data.date,))
             log_id = cursor.fetchone()[0]
-            cursor.execute("DELETE FROM log_items WHERE log_id = ?", (log_id,))
+
+            # 2. 處理資料項並收集有效的 item_ids
+            incoming_item_ids = []
 
             for idx, item in enumerate(data.items):
-                cursor.execute('''INSERT INTO log_items (log_id, title, content, tags, is_done, sort_order)
-                                  VALUES (?, ?, ?, ?, ?, ?)''',
-                               (log_id, item.title.strip(), item.content.strip(), item.tags.strip(),
-                                1 if item.isDone else 0, idx))
+                # 如果前端沒傳 ID (新項目)，後端生成一個
+                current_item_id = item.item_id if item.item_id else str(uuid.uuid4())
+                incoming_item_ids.append(current_item_id)
+
+                # 使用 UPSERT 邏輯 (需依賴 item_id 的 UNIQUE 索引)
+                cursor.execute('''
+                               INSERT INTO log_items (item_id, log_id, title, content, tags, is_done, sort_order)
+                               VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(item_id) DO
+                               UPDATE SET
+                                   title=excluded.title,
+                                   content=excluded.content,
+                                   tags=excluded.tags,
+                                   is_done=excluded.is_done,
+                                   sort_order=excluded.sort_order
+                               ''', (
+                                   current_item_id,
+                                   log_id,
+                                   item.title.strip(),
+                                   item.content.strip(),
+                                   item.tags.strip(),
+                                   1 if item.isDone else 0,
+                                   idx
+                               ))
+
+            # 3. 清理「孤兒」資料：刪除不在本次請求清單中的資料項
+            if incoming_item_ids:
+                placeholders = ','.join(['?'] * len(incoming_item_ids))
+                # 注意：必須限定在當前 log_id 下刪除，避免刪到別天的資料
+                query = f"DELETE FROM log_items WHERE log_id = ? AND item_id NOT IN ({placeholders})"
+                cursor.execute(query, (log_id, *incoming_item_ids))
+            else:
+                # 如果傳入空清單，代表當天所有項都被刪除了
+                cursor.execute("DELETE FROM log_items WHERE log_id = ?", (log_id,))
+
             conn.commit()
+
+        # 觸發備份 (可選)
         export_month_to_txt(data.date)
         return {"status": "success"}
     except Exception as e:
+        print(f"❌ Save Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -77,15 +123,21 @@ async def save_log(data: DayLog):
 async def get_log(date: str):
     with get_db_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute('''SELECT li.title, li.content, li.tags, li.is_done
+        # ✅ 更新查詢：加入 item_id 回傳給前端
+        cursor.execute('''SELECT li.item_id, li.title, li.content, li.tags, li.is_done
                           FROM daily_logs dl
                                    JOIN log_items li ON dl.id = li.log_id
                           WHERE dl.log_date = ?
                           ORDER BY li.sort_order ASC''', (date,))
         rows = cursor.fetchall()
         return {"status": "success", "items": [
-            {"title": r["title"], "content": r["content"], "tags": r["tags"] or "", "isDone": bool(r["is_done"])} for r
-            in rows]}
+            {
+                "item_id": r["item_id"],  # 回傳 UUID
+                "title": r["title"],
+                "content": r["content"],
+                "tags": r["tags"] or "",
+                "isDone": bool(r["is_done"])
+            } for r in rows]}
 
 
 @router.get("/get-all-logs")

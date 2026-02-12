@@ -3,12 +3,37 @@
 let container;
 let isModified = false;
 let isLoading = false;
+let saveTimer = null; // 用於防抖儲存的計時器
+const SAVE_DELAY = 1000; // 自動儲存延遲 (毫秒)
+
+// 輔助函數：生成 UUID (用於前端新建項目)
+const generateUUID = () => {
+    if (typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+    // Fallback for older browsers
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+};
 
 window.onload = async () => {
     container = document.getElementById('todo-container');
     if (container) {
-        new Sortable(container, { animation: 150, handle: '.drag-handle', ghostClass: 'ghost' });
-        container.addEventListener('input', () => isModified = true);
+        // 初始化拖曳功能，並在拖曳結束時觸發自動儲存
+        new Sortable(container, {
+            animation: 150,
+            handle: '.drag-handle',
+            ghostClass: 'ghost',
+            onEnd: () => triggerAutoSave() // 拖曳後自動存
+        });
+
+        // 全局監聽輸入事件，實現防抖儲存
+        container.addEventListener('input', () => {
+            isModified = true;
+            triggerAutoSave();
+        });
     }
 
     // 初始化日期
@@ -17,21 +42,80 @@ window.onload = async () => {
     const localDate = (new Date(now - offset)).toISOString().split('T')[0];
     document.getElementById('date-picker').value = localDate;
 
-    // 平行載入日誌與原子習慣 (這是 Phase 2 新增的關鍵邏輯)
+    // 替換儲存按鈕為狀態指示燈
+    transformSaveButtonToStatus();
+
+    // 平行載入日誌與原子習慣
     await Promise.all([
         loadDateLogs(localDate),
         initHabits(localDate)
     ]);
 };
 
+// --- 自動儲存系統 (Auto-Save System) ---
+
+function triggerAutoSave() {
+    updateStatus('editing'); // 轉為黃燈 (編輯中)
+
+    if (saveTimer) clearTimeout(saveTimer);
+
+    saveTimer = setTimeout(async () => {
+        await saveToBackend();
+    }, SAVE_DELAY);
+}
+
+// 將原本的 Save Button 改造為狀態燈
+function transformSaveButtonToStatus() {
+    const saveBtn = document.querySelector('button[onclick="saveToBackend()"]');
+    if (saveBtn) {
+        // 移除點擊事件，改為純展示
+        saveBtn.removeAttribute('onclick');
+        saveBtn.id = 'status-indicator';
+        saveBtn.className = 'px-4 py-2 rounded-xl flex items-center gap-2 transition-all font-bold text-sm bg-gray-100 text-gray-400 cursor-default';
+        saveBtn.innerHTML = `<i class="fa-solid fa-check"></i> <span class="hidden sm:inline">Ready</span>`;
+    }
+}
+
+function updateStatus(state) {
+    const indicator = document.getElementById('status-indicator');
+    if (!indicator) return;
+
+    switch(state) {
+        case 'editing':
+            indicator.className = 'px-4 py-2 rounded-xl transition-all font-bold text-sm bg-yellow-50 text-yellow-500';
+            indicator.innerHTML = `<i class="fa-solid fa-pen-nib fa-bounce"></i>`;
+            break;
+        case 'saving':
+            indicator.className = 'px-4 py-2 rounded-xl transition-all font-bold text-sm bg-blue-50 text-blue-500';
+            indicator.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i>`;
+            break;
+        case 'saved':
+            indicator.className = 'px-4 py-2 rounded-xl transition-all font-bold text-sm bg-green-50 text-green-500';
+            indicator.innerHTML = `<i class="fa-solid fa-check"></i>`;
+            // 3秒後恢復平靜狀態
+            setTimeout(() => {
+                if(!isModified) { // 如果沒有新的修改，才變回灰色
+                    indicator.className = 'px-4 py-2 rounded-xl transition-all font-bold text-sm bg-gray-50 text-gray-300';
+                    indicator.innerHTML = `<i class="fa-solid fa-check"></i>`;
+                }
+            }, 3000);
+            break;
+        case 'error':
+            indicator.className = 'px-4 py-2 rounded-xl transition-all font-bold text-sm bg-red-50 text-red-500';
+            indicator.innerHTML = `<i class="fa-solid fa-exclamation-triangle"></i>`;
+            break;
+    }
+}
+
 // --- 日期切換邏輯 ---
 
 async function handleDateChange(newDate) {
     if (isLoading) return;
-    if (isModified && !confirm("尚未儲存，確定要切換日期嗎？")) return;
-    isModified = false;
+    // 因為有自動儲存，切換日期前強制存一次確保萬無一失
+    if (isModified) {
+        await saveToBackend();
+    }
 
-    // 同步更新日誌與習慣
     await Promise.all([
         loadDateLogs(newDate),
         initHabits(newDate)
@@ -46,33 +130,39 @@ async function loadDateLogs(date) {
     container.innerHTML = '<div class="text-center text-gray-300 py-20"><i class="fa-solid fa-circle-notch fa-spin text-xl"></i></div>';
 
     try {
-        const data = await apiGetLog(date); // 使用 api.js
-
-        // Console Log 用於除錯，確認後端有回傳資料
-        console.log("📅 Date:", date, "📦 Data:", data);
+        const data = await apiGetLog(date);
 
         container.innerHTML = "";
         if (data.status === "success" && data.items.length > 0) {
             for (const it of data.items) {
-                await addNewItem(it.title, it.content, it.isDone, it.tags);
+                // ✅ 傳入 item_id
+                await addNewItem(it.title, it.content, it.isDone, it.tags, it.item_id);
             }
         } else {
-            addNewItem(); // 無資料時新增一筆空白
+            addNewItem();
         }
         isModified = false;
+        updateStatus('saved');
     } catch (e) {
         console.error(e);
         container.innerHTML = '<div class="text-center py-20 text-red-300 text-xs font-bold">BACKEND OFFLINE</div>';
+        updateStatus('error');
     } finally {
         isLoading = false;
     }
 }
 
-// --- 儲存邏輯 ---
+// --- 儲存邏輯 (核心修改) ---
 
 async function saveToBackend() {
+    if (isLoading) return; // 避免衝突
+
+    updateStatus('saving');
     const date = document.getElementById('date-picker').value;
+
+    // ✅ 收集 item_id
     const items = Array.from(document.querySelectorAll('#todo-container > div')).map(card => ({
+        item_id: card.getAttribute('data-id'), // 讀取 UUID
         title: card.querySelector('.project-title').value.trim(),
         tags: card.querySelector('.tag-input').value.trim(),
         content: card.querySelector('textarea').value.trim(),
@@ -80,19 +170,30 @@ async function saveToBackend() {
     })).filter(it => it.title !== "");
 
     try {
-        const success = await apiSaveLog(date, items); // 使用 api.js
+        const success = await apiSaveLog(date, items);
         if(success) {
             isModified = false;
-            alert("✅ 進度已儲存。");
-            await loadDateLogs(date);
+            updateStatus('saved');
+            // 注意：這裡不再重新 reload loadDateLogs，因為那樣會打斷使用者的輸入焦點
+            // 這是「無感儲存」的關鍵
+        } else {
+            updateStatus('error');
         }
-    } catch (e) { alert('儲存失敗'); }
+    } catch (e) {
+        console.error(e);
+        updateStatus('error');
+    }
 }
 
 // --- UI 組件渲染 (新增卡片) ---
 
-async function addNewItem(title = "", content = "", isDone = false, tags = "") {
+async function addNewItem(title = "", content = "", isDone = false, tags = "", itemId = null) {
+    // ✅ 確保有 UUID，如果沒有則生成新的
+    const uid = itemId || generateUUID();
+
     const itemDiv = document.createElement('div');
+    // ✅ 將 UUID 寫入 DOM 屬性 data-id
+    itemDiv.setAttribute('data-id', uid);
     itemDiv.className = `group bg-white rounded-3xl shadow-sm border border-gray-100 p-6 transition-all ${isDone ? 'completed' : ''}`;
 
     itemDiv.innerHTML = `
@@ -115,7 +216,7 @@ async function addNewItem(title = "", content = "", isDone = false, tags = "") {
             </div>
             <div class="flex flex-col gap-4">
                 <button onclick="toggleDone(this)" class="text-gray-200 hover:text-green-500 transition-all active:scale-90"><i class="fa-solid fa-check-circle text-2xl"></i></button>
-                <button onclick="this.closest('.group').remove()" class="text-gray-200 hover:text-red-400 transition-all"><i class="fa-solid fa-trash text-sm"></i></button>
+                <button onclick="deleteItem(this)" class="text-gray-200 hover:text-red-400 transition-all"><i class="fa-solid fa-trash text-sm"></i></button>
             </div>
         </div>`;
 
@@ -128,8 +229,26 @@ async function addNewItem(title = "", content = "", isDone = false, tags = "") {
     }
 }
 
-// --- 專案歷史儀表板 ---
+// --- 輔助操作函數 ---
 
+function toggleDone(btn) {
+    btn.closest('.group').classList.toggle('completed');
+    triggerAutoSave(); // ✅ 狀態改變也自動存
+}
+
+function deleteItem(btn) {
+    if(confirm("確定刪除此項目？")) {
+        btn.closest('.group').remove();
+        triggerAutoSave(); // ✅ 刪除後自動存
+    }
+}
+
+function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+}
+
+// --- 專案歷史儀表板 (保持不變) ---
 async function renderHistory(cardEl, title, tags) {
     const dashboard = cardEl.querySelector('.project-dashboard');
     const timeline = cardEl.querySelector('.history-timeline-container');
@@ -157,15 +276,8 @@ async function renderHistory(cardEl, title, tags) {
     } catch (e) { console.error(e); }
 }
 
-// --- 輔助函數 ---
-function autoResize(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
-function toggleDone(btn) {
-    btn.closest('.group').classList.toggle('completed');
-    isModified = true;
-}
-
-// --- 足跡回顧抽屜 (History Drawer) ---
-
+// --- 足跡回顧 (保持不變) ---
+// (此處省略 openDrawer, refreshHistoryFeed 等未變動函數，請保留原檔案中的實作)
 async function openDrawer() {
     document.getElementById('history-drawer').classList.remove('translate-x-full');
     document.getElementById('drawer-overlay').classList.replace('opacity-0', 'opacity-30');
@@ -180,6 +292,9 @@ function closeDrawer() {
 }
 
 async function refreshHistoryFeed() {
+    // ... (保留原有的 apiGetAllLogs 邏輯) ...
+    // 注意：這裡只做讀取，不涉及 save 邏輯，故不需要大幅修改
+    // 為節省篇幅，請保留原檔案內容，或需要我完整貼出請告知
     const feed = document.getElementById('history-feed');
     feed.innerHTML = '<div class="text-center text-gray-300 mt-20"><i class="fa-solid fa-spinner fa-spin text-xl"></i></div>';
     try {
@@ -193,8 +308,8 @@ async function refreshHistoryFeed() {
 
                 day.items.forEach(it => {
                     const task = document.createElement('div');
+                    // ... 渲染邏輯 ...
                     task.className = "bg-white p-4 rounded-xl shadow-sm border border-gray-50 mb-3 group/hist relative hover:border-blue-100 transition-all";
-
                     const tagChips = it.tags ? it.tags.split(' ').map(tag => `<span class="bg-blue-50 text-blue-300 text-[9px] px-1.5 py-0.5 rounded-md mr-1">#${tag}</span>`).join('') : '';
 
                     task.innerHTML = `
@@ -207,16 +322,14 @@ async function refreshHistoryFeed() {
                             </div>
                         </div>
                         <div class="opacity-0 group-hover/hist:opacity-100 absolute -right-2 -top-2 flex gap-1 transition-all">
-                            <button onclick="continueTask('${it.title.replace(/'/g, "\\'")}', '${it.tags}')" class="bg-blue-600 text-white text-[9px] px-2.5 py-1.5 rounded-lg shadow-xl font-bold uppercase tracking-tighter">Continue Project</button>
+                             <button onclick="continueTask('${it.title.replace(/'/g, "\\'")}', '${it.tags}')" class="bg-blue-600 text-white text-[9px] px-2.5 py-1.5 rounded-lg shadow-xl font-bold uppercase tracking-tighter">Continue Project</button>
                         </div>`;
-
                     section.appendChild(task);
                 });
                 feed.appendChild(section);
             });
         }
     } catch (e) {
-        console.error(e);
         feed.innerHTML = '載入失敗';
     }
 }
@@ -230,5 +343,5 @@ function filterHistory(k) {
 function continueTask(t, tags) {
     addNewItem(t, "", false, tags);
     closeDrawer();
-    isModified = true;
+    triggerAutoSave(); // ✅ 新增後自動存
 }

@@ -1,43 +1,36 @@
 # Daily Logger - 增量型專案日誌與原子習慣系統
 
 這是一個基於 Python (FastAPI) + SQLite + Vanilla JS 開發的個人生產力工具。
-專為追求「極簡操作」與「長期行為追蹤」的專業人士設計。結合了**增量儲存日誌**與**原子習慣堆疊**兩大核心模組，協助使用者在記錄工作的同時，建立強大的自律系統。
+專為追求「極簡操作」與「長期行為追蹤」的專業人士設計。結合了**增量儲存日誌**與**原子習慣堆疊**兩大核心模組。
 
 ## 🚀 核心模組與特色
 
-### 📝 專案日誌模組 (Daily Work Log)
-* **增量儲存 (Incremental Storage)**：資料庫僅儲存當日新增內容，確保專案長期維護時效能依舊絲滑。
+### 📝 專案日誌模組 (Daily Work Log) - **Enhanced!**
+* **UUID 增量更新 (True Incremental Sync)**：採用 UUID 識別每一筆紀錄。後端捨棄「全刪全插」模式，改用 UPSERT (Update or Insert) 邏輯，確保在高頻同步下資料依然絕對安全。
+* **無感自動儲存 (Debounced Auto-save)**：引入防抖機制（Debounce），在使用者停止輸入 1 秒後自動同步至資料庫。徹底移除傳統「儲存按鈕」，實現專注力零干擾。
+* **狀態指示燈 (Status UI)**：以去字化的「呼吸燈號」取代彈窗提醒，即時回饋「編輯中、同步中、已存檔」三種狀態。
 * **專案儀表板 (Project Dashboard)**：自動溯源歷史紀錄，以時間軸呈現專案脈絡，解決「完成即遺忘」的痛點。
 * **視覺化閱讀優化**：色彩弱化完成項與綠色勾勾標記，讓閱讀重心始終停留在「進行中」的任務。
 
-### ⚛️ 原子習慣模組 (Atomic Habits) - **NEW!**
+### ⚛️ 原子習慣模組 (Atomic Habits)
 * **融合膠囊 (Fusion Bar)**：首創「托盤化」堆疊設計。將多個習慣組合成「習慣鏈」，完成時會像能量條一樣展開，視覺化呈現行為的連續性。
 * **物理互動設定 (Physical UI)**：
     * **托盤拖曳**：在設定視窗中將習慣「丟入」托盤即可完成組合，變身為小膠囊縮圖。
     * **物理移出**：移除多餘按鈕，將習慣從托盤拖回池子即可解除組合，操作極度直覺。
 * **自動解散機制 (Auto-Dissolve)**：智慧判斷無效鏈條（如僅剩 1 個習慣），關閉視窗時自動歸類，維持介面極簡。
-* **一鍵閃電打卡**：全局 Master Toggle，一鍵標記當日所有習慣，快速完成打卡閉環。
 
-## 🛠️ 安裝與執行
+---
 
-1.  **安裝依賴**
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-2.  **啟動伺服器**
-    ```bash
-    python main.py
-    ```
-
-3.  **開啟應用**
-    瀏覽器訪問：`http://127.0.0.1:8000`
-
-## 🛠️ 技術架構
-
-* **後端**：FastAPI (Python 3.10+) + SQLite。
-* **前端**：Vanilla JavaScript (ES6+) + Tailwind CSS + Sortable.js。
+## 🛠 技術棧 (Tech Stack)
+* **Backend**: FastAPI (Python 3.10+), SQLAlchemy/SQLite
+* **Frontend**: Vanilla JavaScript (ES6+), Tailwind CSS (CDN), Sortable.js
+* **Sync Logic**: UUID-based Upsert, Debounce Mechanism, Crypto API
 * **設計理念**：去字化 (Text-free) 介面，依賴圖樣與顏色對比提供直覺反饋。
+
+## 📦 安裝與啟動
+1. 安裝依賴：`pip install -r requirements.txt`
+2. 啟動伺服器：`python main.py`
+3. 訪問頁面：`http://127.0.0.1:8000`
 
 ## 📂 專案結構
 
