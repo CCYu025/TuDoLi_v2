@@ -14,7 +14,6 @@ body {
 /* 拖拽佔位符 */
 .ghost { opacity: 0.4; background: #ebf5ff; border: 2px dashed #3b82f6; border-radius: 16px; }
 
-
 /* =========================================
    🚀 第一部分：日誌系統與標籤 (New Features)
    ========================================= */
@@ -34,16 +33,44 @@ body {
 .tag-container:focus-within { background: #ffffff; border-color: #e2e8f0; }
 
 .tag-capsule {
-    display: inline-flex; align-items: center; gap: 4px;
+    display: inline-flex; align-items: center;
     background: #3b82f6; color: #ffffff;
-    font-size: 10px; font-weight: 800; padding: 3px 10px;
+    font-size: 10px; font-weight: 800; padding: 4px 12px;
     border-radius: 99px;
     box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
     animation: capsulePop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     cursor: default;
+    transition: all 0.2s ease-out; /* 膠囊寬度變化動畫 */
 }
-.tag-capsule .delete-tag { cursor: pointer; opacity: 0.7; transition: transform 0.2s; }
-.tag-capsule .delete-tag:hover { opacity: 1; transform: scale(1.2); }
+
+/* ✅ 標籤 X 按鈕：預設隱藏並縮小寬度 */
+.tag-capsule .delete-tag {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+    margin-left: 0;
+    font-size: 10px;
+    transition: all 0.2s ease-out;
+    cursor: pointer;
+}
+
+/* ✅ 懸停效果：顯示 X 並滑出 */
+.tag-capsule:hover {
+    padding-right: 10px; /* 懸停時稍微調整內距 */
+}
+
+.tag-capsule:hover .delete-tag {
+    opacity: 0.8;
+    width: 12px;
+    margin-left: 6px;
+}
+
+/* 懸停在 X 上變紅 */
+.tag-capsule .delete-tag:hover {
+    opacity: 1 !important;
+    color: #fee2e2; /* 淺紅文字，配藍底較和諧 */
+    transform: scale(1.2);
+}
 
 .ghost-tag-input {
     background: transparent; border: none !important; outline: none !important;
@@ -59,10 +86,8 @@ body {
 }
 .task-card:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); transform: translateY(-2px); }
 
-/* 勾勾顏色：預設為灰色 */
 .task-card .fa-circle-check { color: #e5e7eb; transition: all 0.3s ease; }
 
-/* ✅ 完成狀態：白色膠囊 + 綠色邊框 */
 .task-card.completed {
     padding: 12px 24px !important;
     border-radius: 99px !important;
@@ -72,10 +97,8 @@ body {
     max-height: 60px !important;
 }
 
-/* 收折後垂直置中 */
 .task-card.completed > div { align-items: center !important; height: 100% !important; }
 
-/* 隱藏元素 */
 .task-card.completed .fa-trash-can,
 .task-card.completed .tag-container,
 .task-card.completed textarea,
@@ -84,22 +107,19 @@ body {
     display: none !important; opacity: 0 !important; height: 0 !important; margin: 0 !important; padding: 0 !important;
 }
 
-/* 標題調整 (移除刪除線) */
 .task-card.completed .project-title {
     font-size: 14px !important; color: #94a3b8 !important; text-decoration: none !important; margin: 0 !important; pointer-events: none;
 }
 
-/* 勾勾顏色：完成後變綠 */
 .task-card.completed .fa-circle-check { color: #10b981 !important; transform: scale(1.1); }
 .task-card.completed .action-btn-group { flex-direction: row !important; gap: 10px !important; }
 
-/* 歷史時間軸線條 */
 .timeline-line::before { content: ''; position: absolute; left: 7px; top: 10px; bottom: 0; width: 1px; background-color: #e5e7eb; }
 .history-item:last-child .timeline-line::before { display: none; }
 
 
 /* =========================================
-   ⚛️ 第二部分：原子習慣模組 (Atomic Habits)
+   ⚛️ 第二部分：原子習慣模組 (保持相容)
    ========================================= */
 #app-menu-drawer { box-shadow: 10px 0 30px rgba(0,0,0,0.1); }
 .backdrop-blur-md { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
@@ -143,7 +163,6 @@ body {
 .habit-done .habit-icon { color: white; }
 .habit-done .habit-label { font-size: 11px; opacity: 1; width: auto; margin-left: 8px; }
 
-/* 原子習慣顏色邏輯 */
 .habit-group-container .habit-done { background-color: var(--habit-color) !important; color: white !important; }
 .habit-group-container .habit-done .habit-icon { background-color: rgba(255,255,255,0.2) !important; }
 .habit-group-container .habit-done .habit-label { color: white !important; }
@@ -155,7 +174,6 @@ body {
 .lightning-btn:active { transform: scale(0.9) rotate(-10deg); }
 .lightning-btn.active { color: #fbbf24; text-shadow: 0 0 15px rgba(251, 191, 36, 0.8); }
 
-/* --- 設定頁面 (托盤化) --- */
 #chain-container { padding: 0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 #chain-container:not(:empty) { padding: 16px; box-shadow: inset 0 -4px 6px -4px rgba(0,0,0,0.05); }
 

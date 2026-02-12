@@ -1,7 +1,7 @@
 /**
  * Daily Logger v2 - Final Corrected Version
  * Features: Auto-save, UUID, Tag Capsules, Atomic Habits, and Full History UI.
- * Refined: Auto-sorting (Complete to bottom, Uncheck to top)
+ * Refined: Auto-sorting, Hover Tags, Space/Blur Tag Trigger.
  */
 
 let container;
@@ -23,7 +23,7 @@ window.onload = async () => {
     container = document.getElementById('todo-container');
     if (container) {
         new Sortable(container, {
-            animation: 300, // 稍微拉長動畫，讓自動重排更平滑
+            animation: 300,
             handle: '.drag-handle',
             ghostClass: 'ghost',
             onEnd: () => triggerAutoSave()
@@ -51,7 +51,6 @@ window.onload = async () => {
     ]);
 };
 
-// --- 全域變數與API ---
 async function handleDateChange(newDate) {
     if (isLoading) return;
     if (isModified) await saveToBackend();
@@ -61,7 +60,7 @@ async function handleDateChange(newDate) {
     ]);
 }
 
-// --- 標籤膠囊系統 (Unified) ---
+// --- 標籤膠囊系統 ---
 
 function createTagCapsule(tagText, tagContainer) {
     if (!tagText.trim()) return;
@@ -70,7 +69,7 @@ function createTagCapsule(tagText, tagContainer) {
 
     const capsule = document.createElement('span');
     capsule.className = 'tag-capsule';
-    capsule.innerHTML = `<span class="tag-text">${tagText}</span><i class="fa-solid fa-xmark delete-tag" style="margin-left:4px; font-size:9px;"></i>`;
+    capsule.innerHTML = `<span class="tag-text">${tagText}</span><i class="fa-solid fa-xmark delete-tag"></i>`;
 
     capsule.querySelector('.delete-tag').onclick = (e) => {
         e.stopPropagation();
@@ -82,12 +81,10 @@ function createTagCapsule(tagText, tagContainer) {
     tagContainer.insertBefore(capsule, input);
 }
 
-// ✅ 優化：處理按鍵觸發標籤
 function handleTagInput(event, inputEl) {
     const tagContainer = inputEl.closest('.tag-container');
     const val = inputEl.value.trim();
 
-    // Space (空白) 或 Enter 觸發
     if (event.key === ' ' || event.key === 'Enter') {
         event.preventDefault();
         if (val) {
@@ -104,7 +101,7 @@ function handleTagInput(event, inputEl) {
     }
 }
 
-// ✅ 新增：移開游標 (Blur) 自動轉膠囊
+// ✅ 處理移開游標自動轉膠囊
 function handleTagBlur(inputEl) {
     const tagContainer = inputEl.closest('.tag-container');
     const val = inputEl.value.trim();
@@ -160,7 +157,7 @@ function updateStatus(state) {
     }
 }
 
-// --- 核心邏輯：新增與渲染 ---
+// --- API 與 渲染 ---
 
 async function loadDateLogs(date) {
     if (isLoading) return;
@@ -251,19 +248,15 @@ async function addNewItem(title = "", content = "", isDone = false, tags = "", i
 
 function autoResize(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
 
-// ✅ 重構：點擊勾勾時的自動排序邏輯
 function toggleDone(btn) {
     const card = btn.closest('.task-card');
     const isNowCompleted = !card.classList.contains('completed');
 
     card.classList.toggle('completed');
 
-    // 逆向邏輯與沉底邏輯：
     if (isNowCompleted) {
-        // 完成：移動到最下方
         container.appendChild(card);
     } else {
-        // 取消勾選：移動到最上方 (主要對象)
         container.prepend(card);
     }
 
@@ -279,7 +272,6 @@ function deleteItem(btn) {
     }
 }
 
-// --- 專案歷史儀表板 ---
 async function renderHistory(cardEl, title, tags) {
     const dashboard = cardEl.querySelector('.project-dashboard');
     const timeline = cardEl.querySelector('.history-timeline-container');
@@ -304,7 +296,6 @@ async function renderHistory(cardEl, title, tags) {
     } catch (e) {}
 }
 
-// --- 足跡回顧抽屜 ---
 async function openDrawer() {
     document.getElementById('history-drawer').classList.remove('translate-x-full');
     document.getElementById('drawer-overlay').classList.replace('opacity-0', 'opacity-30');
@@ -348,8 +339,8 @@ async function refreshHistoryFeed() {
                             </div>
                         </div>
                         <div class="opacity-0 group-hover/hist:opacity-100 absolute -right-2 -top-2 transition-all scale-90 hover:scale-100">
-                             <button onclick="continueTask('${it.title.replace(/'/g, "\\'")}', '${it.tags}')" class="bg-blue-600 text-white text-[10px] px-3 py-2 rounded-xl shadow-lg font-bold uppercase tracking-wide cursor-pointer flex items-center gap-1">
-                                <i class="fa-solid fa-arrow-turn-up"></i> Continue
+                             <button onclick=\"continueTask('${it.title.replace(/'/g, "\\'")}', '${it.tags}')\" class=\"bg-blue-600 text-white text-[10px] px-3 py-2 rounded-xl shadow-lg font-bold uppercase tracking-wide cursor-pointer flex items-center gap-1\">
+                                <i class=\"fa-solid fa-arrow-turn-up\"></i> Continue
                              </button>
                         </div>`;
                     section.appendChild(task);

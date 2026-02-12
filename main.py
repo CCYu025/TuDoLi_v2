@@ -1,12 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import Response # <--- 新增
 from database import init_db
-from routers import logs, habits  # <--- 新增 habits
+from routers import logs, habits
 
 app = FastAPI()
 
-# 初始化資料庫 (會自動建立新表)
+# 初始化資料庫
 init_db()
 
 app.add_middleware(
@@ -16,9 +17,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ✅ 新增：靜音 favicon 路由，防止終端機報錯
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return Response(status_code=204)
+
 # 掛載路由
 app.include_router(logs.router)
-app.include_router(habits.router) # <--- 掛載原子習慣 API
+app.include_router(habits.router)
 
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
 

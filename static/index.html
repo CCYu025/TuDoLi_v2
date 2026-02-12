@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daily Logger - Atomic Habits</title>
+
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='10' fill='%233b82f6'/><path d='M7 16l6 6 12-12' stroke='white' stroke-width='4' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -22,11 +25,11 @@
                 </div>
 
                 <div class="flex gap-2">
+                    <button id="status-indicator" class="px-4 py-2 rounded-xl flex items-center gap-2 transition-all font-bold text-xs bg-gray-100 text-gray-400">
+                        <i class="fa-solid fa-cloud"></i> <span>READY</span>
+                    </button>
                     <button onclick="openDrawer()" class="text-blue-600 hover:text-blue-800 text-sm font-bold flex items-center gap-1 mr-2">
                         <i class="fa-solid fa-shoe-prints"></i>
-                    </button>
-                    <button onclick="saveToBackend()" class="bg-blue-600 text-white px-5 py-2 rounded-xl hover:bg-blue-700 shadow-lg flex items-center gap-2 transition-all active:scale-95 text-sm font-bold">
-                        <i class="fa-solid fa-save"></i>
                     </button>
                 </div>
             </div>
@@ -56,9 +59,7 @@
 
     <div id="habit-settings-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center">
         <div class="absolute inset-0 bg-gray-900/20 backdrop-blur-sm transition-all" onclick="closeHabitSettings()"></div>
-
         <div class="relative bg-white w-full max-w-md mx-4 rounded-3xl shadow-2xl overflow-hidden modal-enter flex flex-col max-h-[85vh]">
-
             <div class="p-4 bg-white border-b border-gray-100 z-20 flex gap-3 items-center shadow-sm relative">
                 <div class="relative w-8 h-8 rounded-full overflow-hidden flex-shrink-0 cursor-pointer shadow-sm ring-1 ring-gray-100">
                     <input type="color" id="new-habit-color" value="#3B82F6" class="absolute -top-2 -left-2 w-16 h-16 cursor-pointer border-none p-0">
@@ -71,13 +72,9 @@
                     <i class="fa-solid fa-plus"></i>
                 </button>
             </div>
-
-            <div id="chain-container" class="bg-gray-50/50 border-b border-gray-100 z-10 overflow-y-auto custom-scrollbar flex-shrink-0 max-h-[30vh] empty:hidden transition-all duration-300">
-                </div>
-
+            <div id="chain-container" class="bg-gray-50/50 border-b border-gray-100 z-10 overflow-y-auto custom-scrollbar flex-shrink-0 max-h-[30vh] empty:hidden transition-all duration-300"></div>
             <div class="flex-grow overflow-y-auto p-4 custom-scrollbar bg-white relative">
-                <div id="habit-settings-list" class="space-y-2 pb-10">
-                    </div>
+                <div id="habit-settings-list" class="space-y-2 pb-10"></div>
                 <div class="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
             </div>
         </div>
@@ -89,7 +86,7 @@
             <button onclick="closeDrawer()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-times text-2xl"></i></button>
         </div>
         <div class="p-4 border-b">
-            <input type="text" id="history-search" oninput=\"filterHistory(this.value)\" placeholder="搜尋..." class="w-full text-xs border rounded-xl px-4 py-2 bg-gray-50">
+            <input type="text" id="history-search" oninput="filterHistory(this.value)" placeholder="搜尋..." class="w-full text-xs border rounded-xl px-4 py-2 bg-gray-50">
         </div>
         <div id="history-feed" class="flex-grow overflow-y-auto bg-gray-50 p-4 space-y-6 custom-scrollbar"></div>
     </div>
