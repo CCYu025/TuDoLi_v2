@@ -1,6 +1,7 @@
 /**
  * Daily Logger v2 - Final Corrected Version
  * Features: Auto-save, UUID, Tag Capsules, Atomic Habits, and Full History UI.
+ * Refined: Auto-sorting (Complete to bottom, Uncheck to top)
  */
 
 let container;
@@ -22,14 +23,13 @@ window.onload = async () => {
     container = document.getElementById('todo-container');
     if (container) {
         new Sortable(container, {
-            animation: 200,
+            animation: 300, // 稍微拉長動畫，讓自動重排更平滑
             handle: '.drag-handle',
             ghostClass: 'ghost',
             onEnd: () => triggerAutoSave()
         });
 
         container.addEventListener('input', (e) => {
-            // 排除標籤輸入框，避免打字時頻繁觸發
             if (!e.target.classList.contains('ghost-tag-input')) {
                 isModified = true;
                 triggerAutoSave();
@@ -40,7 +40,8 @@ window.onload = async () => {
     const now = new Date();
     const offset = now.getTimezoneOffset() * 60000;
     const localDate = (new Date(now - offset)).toISOString().split('T')[0];
-    document.getElementById('date-picker').value = localDate;
+    const datePicker = document.getElementById('date-picker');
+    if(datePicker) datePicker.value = localDate;
 
     transformSaveButtonToStatus();
 
@@ -61,6 +62,7 @@ async function handleDateChange(newDate) {
 }
 
 // --- 標籤膠囊系統 (Unified) ---
+
 function createTagCapsule(tagText, tagContainer) {
     if (!tagText.trim()) return;
     const existing = Array.from(tagContainer.querySelectorAll('.tag-text')).map(t => t.innerText);
@@ -80,9 +82,12 @@ function createTagCapsule(tagText, tagContainer) {
     tagContainer.insertBefore(capsule, input);
 }
 
+// ✅ 優化：處理按鍵觸發標籤
 function handleTagInput(event, inputEl) {
     const tagContainer = inputEl.closest('.tag-container');
     const val = inputEl.value.trim();
+
+    // Space (空白) 或 Enter 觸發
     if (event.key === ' ' || event.key === 'Enter') {
         event.preventDefault();
         if (val) {
@@ -96,6 +101,17 @@ function handleTagInput(event, inputEl) {
             capsules[capsules.length - 1].remove();
             triggerAutoSave();
         }
+    }
+}
+
+// ✅ 新增：移開游標 (Blur) 自動轉膠囊
+function handleTagBlur(inputEl) {
+    const tagContainer = inputEl.closest('.tag-container');
+    const val = inputEl.value.trim();
+    if (val) {
+        createTagCapsule(val, tagContainer);
+        inputEl.value = '';
+        triggerAutoSave();
     }
 }
 
@@ -166,7 +182,8 @@ async function loadDateLogs(date) {
 }
 
 async function saveToBackend() {
-    const date = document.getElementById('date-picker').value;
+    const datePicker = document.getElementById('date-picker');
+    const date = datePicker ? datePicker.value : "";
     const cards = Array.from(document.querySelectorAll('#todo-container > .task-card'));
 
     const items = cards.map(card => {
@@ -203,7 +220,7 @@ async function addNewItem(title = "", content = "", isDone = false, tags = "", i
 
                 <div class="tag-container mt-2">
                     <i class="fa-solid fa-hashtag text-[10px] text-gray-300 mr-1"></i>
-                    <input type="text" placeholder="Tags..." class="ghost-tag-input" onkeydown="handleTagInput(event, this)">
+                    <input type="text" placeholder="Tags..." class="ghost-tag-input" onkeydown="handleTagInput(event, this)" onblur="handleTagBlur(this)">
                 </div>
 
                 <div class="project-dashboard mt-4 hidden">
@@ -234,9 +251,22 @@ async function addNewItem(title = "", content = "", isDone = false, tags = "", i
 
 function autoResize(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
 
+// ✅ 重構：點擊勾勾時的自動排序邏輯
 function toggleDone(btn) {
     const card = btn.closest('.task-card');
+    const isNowCompleted = !card.classList.contains('completed');
+
     card.classList.toggle('completed');
+
+    // 逆向邏輯與沉底邏輯：
+    if (isNowCompleted) {
+        // 完成：移動到最下方
+        container.appendChild(card);
+    } else {
+        // 取消勾選：移動到最上方 (主要對象)
+        container.prepend(card);
+    }
+
     isModified = true;
     triggerAutoSave();
 }
@@ -249,12 +279,13 @@ function deleteItem(btn) {
     }
 }
 
-// --- 專案歷史儀表板 (Project Dashboard) ---
+// --- 專案歷史儀表板 ---
 async function renderHistory(cardEl, title, tags) {
     const dashboard = cardEl.querySelector('.project-dashboard');
     const timeline = cardEl.querySelector('.history-timeline-container');
     const daysLabel = cardEl.querySelector('.days-count');
-    const today = document.getElementById('date-picker').value;
+    const datePicker = document.getElementById('date-picker');
+    const today = datePicker ? datePicker.value : "";
     try {
         const data = await apiGetProjectHistory(title, tags);
         if (data.status === "success" && data.history.length > 1) {
@@ -273,7 +304,7 @@ async function renderHistory(cardEl, title, tags) {
     } catch (e) {}
 }
 
-// --- 足跡回顧抽屜 (History Drawer) ---
+// --- 足跡回顧抽屜 ---
 async function openDrawer() {
     document.getElementById('history-drawer').classList.remove('translate-x-full');
     document.getElementById('drawer-overlay').classList.replace('opacity-0', 'opacity-30');
@@ -287,7 +318,6 @@ function closeDrawer() {
     document.getElementById('drawer-overlay').classList.add('pointer-events-none');
 }
 
-// ✅ 修復：找回標籤與繼承按鈕的完整邏輯
 async function refreshHistoryFeed() {
     const feed = document.getElementById('history-feed');
     feed.innerHTML = '<div class="text-center py-20"><i class="fa-solid fa-spinner fa-spin text-gray-200"></i></div>';
@@ -302,10 +332,8 @@ async function refreshHistoryFeed() {
 
                 day.items.forEach(it => {
                     const task = document.createElement('div');
-                    // 恢復漂亮的卡片樣式
                     task.className = "bg-white p-5 rounded-2xl shadow-sm border border-gray-50 mb-3 group/hist relative hover:border-blue-100 transition-all";
 
-                    // ✅ 找回標籤 (Tags) 的渲染逻辑
                     const chips = it.tags ? it.tags.split(' ').map(t =>
                         `<span class="bg-blue-50 text-blue-300 text-[9px] px-1.5 py-0.5 rounded-md mr-1">#${t}</span>`
                     ).join('') : '';
@@ -319,7 +347,6 @@ async function refreshHistoryFeed() {
                                 ${it.content ? `<div class="mt-3 text-xs text-gray-400 leading-relaxed italic">${it.content.replace(/\n/g, '<br>')}</div>` : ''}
                             </div>
                         </div>
-
                         <div class="opacity-0 group-hover/hist:opacity-100 absolute -right-2 -top-2 transition-all scale-90 hover:scale-100">
                              <button onclick="continueTask('${it.title.replace(/'/g, "\\'")}', '${it.tags}')" class="bg-blue-600 text-white text-[10px] px-3 py-2 rounded-xl shadow-lg font-bold uppercase tracking-wide cursor-pointer flex items-center gap-1">
                                 <i class="fa-solid fa-arrow-turn-up"></i> Continue

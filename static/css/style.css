@@ -17,10 +17,8 @@ body {
 
 /* =========================================
    🚀 第一部分：日誌系統與標籤 (New Features)
-   包含：標籤膠囊、日誌卡片變身動畫
    ========================================= */
 
-/* 1. 標籤膠囊動畫 */
 @keyframes capsulePop {
     0% { transform: scale(0.9); opacity: 0; }
     50% { transform: scale(1.05); }
@@ -52,8 +50,7 @@ body {
     padding: 0 !important; font-size: 11px; font-weight: 700; color: #64748b; flex-grow: 1; min-width: 60px;
 }
 
-/* 2. 核心修復：日誌卡片變身膠囊 (Task Card Morphing) */
-/* 預設卡片狀態 */
+/* 核心修復：日誌卡片變身膠囊 (Morphing) */
 .task-card {
     background: white; border-radius: 24px; padding: 24px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid #f1f5f9;
@@ -62,20 +59,24 @@ body {
 }
 .task-card:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); transform: translateY(-2px); }
 
-/* ✅ 完成狀態：強制變身為膠囊 (Strong Fix) */
+/* 勾勾顏色：預設為灰色 */
+.task-card .fa-circle-check { color: #e5e7eb; transition: all 0.3s ease; }
+
+/* ✅ 完成狀態：白色膠囊 + 綠色邊框 */
 .task-card.completed {
     padding: 12px 24px !important;
     border-radius: 99px !important;
-    background-color: #f8fafc !important;
-    border-color: transparent !important;
-    box-shadow: none !important;
+    background-color: #ffffff !important;
+    border: 1px solid #dcfce7 !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.02) !important;
     max-height: 60px !important;
 }
 
-/* 修正內層 Flex 結構 */
+/* 收折後垂直置中 */
 .task-card.completed > div { align-items: center !important; height: 100% !important; }
 
-/* 強制隱藏元素 */
+/* 隱藏元素 */
+.task-card.completed .fa-trash-can,
 .task-card.completed .tag-container,
 .task-card.completed textarea,
 .task-card.completed .project-dashboard,
@@ -83,20 +84,22 @@ body {
     display: none !important; opacity: 0 !important; height: 0 !important; margin: 0 !important; padding: 0 !important;
 }
 
-/* 標題與按鈕調整 */
+/* 標題調整 (移除刪除線) */
 .task-card.completed .project-title {
-    font-size: 14px !important; color: #94a3b8 !important; text-decoration: line-through; margin: 0 !important; pointer-events: none;
+    font-size: 14px !important; color: #94a3b8 !important; text-decoration: none !important; margin: 0 !important; pointer-events: none;
 }
+
+/* 勾勾顏色：完成後變綠 */
+.task-card.completed .fa-circle-check { color: #10b981 !important; transform: scale(1.1); }
 .task-card.completed .action-btn-group { flex-direction: row !important; gap: 10px !important; }
 
-/* 歷史時間軸 */
+/* 歷史時間軸線條 */
 .timeline-line::before { content: ''; position: absolute; left: 7px; top: 10px; bottom: 0; width: 1px; background-color: #e5e7eb; }
 .history-item:last-child .timeline-line::before { display: none; }
 
 
 /* =========================================
    ⚛️ 第二部分：原子習慣模組 (Atomic Habits)
-   (已完全還原為你提供的版本，確保顏色與樣式正確)
    ========================================= */
 #app-menu-drawer { box-shadow: 10px 0 30px rgba(0,0,0,0.1); }
 .backdrop-blur-md { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
@@ -140,7 +143,7 @@ body {
 .habit-done .habit-icon { color: white; }
 .habit-done .habit-label { font-size: 11px; opacity: 1; width: auto; margin-left: 8px; }
 
-/* 這裡就是顏色顯示的關鍵，我之前遺漏了 */
+/* 原子習慣顏色邏輯 */
 .habit-group-container .habit-done { background-color: var(--habit-color) !important; color: white !important; }
 .habit-group-container .habit-done .habit-icon { background-color: rgba(255,255,255,0.2) !important; }
 .habit-group-container .habit-done .habit-label { color: white !important; }
@@ -152,7 +155,7 @@ body {
 .lightning-btn:active { transform: scale(0.9) rotate(-10deg); }
 .lightning-btn.active { color: #fbbf24; text-shadow: 0 0 15px rgba(251, 191, 36, 0.8); }
 
-/* --- 設定頁面 (托盤化 + 大目標優化) --- */
+/* --- 設定頁面 (托盤化) --- */
 #chain-container { padding: 0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 #chain-container:not(:empty) { padding: 16px; box-shadow: inset 0 -4px 6px -4px rgba(0,0,0,0.05); }
 
