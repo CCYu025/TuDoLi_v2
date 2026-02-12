@@ -14,6 +14,7 @@ body {
 /* 拖拽佔位符 */
 .ghost { opacity: 0.4; background: #ebf5ff; border: 2px dashed #3b82f6; border-radius: 16px; }
 
+
 /* =========================================
    🚀 第一部分：日誌系統與標籤 (New Features)
    ========================================= */
@@ -40,37 +41,16 @@ body {
     box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
     animation: capsulePop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     cursor: default;
-    transition: all 0.2s ease-out; /* 膠囊寬度變化動畫 */
-}
-
-/* ✅ 標籤 X 按鈕：預設隱藏並縮小寬度 */
-.tag-capsule .delete-tag {
-    opacity: 0;
-    width: 0;
-    overflow: hidden;
-    margin-left: 0;
-    font-size: 10px;
     transition: all 0.2s ease-out;
-    cursor: pointer;
 }
 
-/* ✅ 懸停效果：顯示 X 並滑出 */
-.tag-capsule:hover {
-    padding-right: 10px; /* 懸停時稍微調整內距 */
+.tag-capsule .delete-tag {
+    opacity: 0; width: 0; overflow: hidden; margin-left: 0;
+    font-size: 10px; transition: all 0.2s ease-out; cursor: pointer;
 }
-
-.tag-capsule:hover .delete-tag {
-    opacity: 0.8;
-    width: 12px;
-    margin-left: 6px;
-}
-
-/* 懸停在 X 上變紅 */
-.tag-capsule .delete-tag:hover {
-    opacity: 1 !important;
-    color: #fee2e2; /* 淺紅文字，配藍底較和諧 */
-    transform: scale(1.2);
-}
+.tag-capsule:hover { padding-right: 10px; }
+.tag-capsule:hover .delete-tag { opacity: 0.8; width: 12px; margin-left: 6px; }
+.tag-capsule .delete-tag:hover { opacity: 1 !important; color: #fee2e2; transform: scale(1.2); }
 
 .ghost-tag-input {
     background: transparent; border: none !important; outline: none !important;
@@ -119,7 +99,7 @@ body {
 
 
 /* =========================================
-   ⚛️ 第二部分：原子習慣模組 (保持相容)
+   ⚛️ 第二部分：原子習慣模組 (Atomic Habits)
    ========================================= */
 #app-menu-drawer { box-shadow: 10px 0 30px rgba(0,0,0,0.1); }
 .backdrop-blur-md { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
@@ -220,3 +200,88 @@ body {
 .habit-setting-group .habit-setting-item .item-actions { display: none !important; }
 .habit-setting-group .habit-setting-item .item-icon-wrapper { width: 24px; height: 24px; font-size: 10px; }
 .habit-setting-group .habit-setting-item .item-title { font-size: 11px; margin-right: 8px; max-width: 100px; }
+
+/* =========================================
+   🧬 第三部分：專案脈絡地圖 (Project Map)
+   ========================================= */
+
+/* 里程碑托盤 - 垂直時間軸容器 */
+.milestone-tray {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 16px 16px 16px 24px; /* 左側留空間給線條 */
+    position: relative;
+    margin-left: 12px; /* 讓出空間給圓點 */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+    transition: border-color 0.2s;
+}
+.milestone-tray:hover { border-color: #cbd5e1; }
+
+/* 左側連接線 (Vertical Timeline) */
+.milestone-tray::before {
+    content: '';
+    position: absolute;
+    top: 24px; /* 從圓點中心開始 */
+    bottom: -34px; /* 連接到下一個容器 */
+    left: -19px; /* 調整位置以對齊 */
+    width: 2px;
+    background-color: #cbd5e1;
+    z-index: 0;
+}
+/* 最後一個托盤不要畫線，不然會突出去 */
+.milestone-tray:last-child::before { display: none; }
+
+/* 節點圓點 (The Dot) */
+.milestone-node {
+    position: absolute;
+    top: 20px;
+    left: -24px; /* 放在線條上 */
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    z-index: 1;
+    box-shadow: 0 0 0 4px #f1f5f9; /* 外圈光暈 */
+}
+
+/* 顏色變體：Root vs Evolve */
+.node-root { background: #10b981; border: 2px solid #dcfce7; }
+.node-evolve { background: #f59e0b; border: 2px solid #fef3c7; }
+
+/* 演化標籤 (Badge) */
+.evo-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px; font-weight: 800;
+    padding: 2px 8px; border-radius: 6px;
+    margin-bottom: 8px;
+    border: 1px solid transparent;
+}
+.badge-root { background: #dcfce7; color: #059669; border-color: #bbf7d0; }
+.badge-evolve { background: #fffbeb; color: #d97706; border-color: #fef3c7; }
+
+
+/* 地圖內的小任務卡片 */
+.map-task-item {
+    padding: 8px 12px;
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    cursor: grab;
+    display: flex; justify-content: space-between; align-items: center;
+    transition: all 0.2s;
+}
+.map-task-item:hover {
+    background: white;
+    border-color: #cbd5e1;
+    transform: translateX(2px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+.map-task-item:active { cursor: grabbing; }
+
+/* 拖曳時的高亮 */
+.map-highlight {
+    background: #eff6ff !important;
+    border: 2px dashed #3b82f6 !important;
+    opacity: 0.8;
+}

@@ -1,7 +1,7 @@
 /**
- * Daily Logger v2 - Final Corrected Version
- * Features: Auto-save, UUID, Tag Capsules, Atomic Habits, and Full History UI.
- * Refined: Auto-sorting, Hover Tags, Space/Blur Tag Trigger.
+ * Daily Logger v2.6 - Project Map Integration
+ * Features: Auto-save, UUID, Morphing UI, Tag Capsules, Auto-sorting.
+ * New: Project Inheritance, Evolution Logic, and DNA Map Trigger.
  */
 
 let container;
@@ -101,7 +101,6 @@ function handleTagInput(event, inputEl) {
     }
 }
 
-// ✅ 處理移開游標自動轉膠囊
 function handleTagBlur(inputEl) {
     const tagContainer = inputEl.closest('.tag-container');
     const val = inputEl.value.trim();
@@ -157,7 +156,7 @@ function updateStatus(state) {
     }
 }
 
-// --- API 與 渲染 ---
+// --- 核心邏輯：新增與渲染 ---
 
 async function loadDateLogs(date) {
     if (isLoading) return;
@@ -169,7 +168,8 @@ async function loadDateLogs(date) {
         container.innerHTML = "";
         if (res.status === "success" && res.items.length > 0) {
             for (const it of res.items) {
-                await addNewItem(it.title, it.content, it.isDone, it.tags, it.item_id);
+                // 傳入進化樹參數
+                await addNewItem(it.title, it.content, it.isDone, it.tags, it.item_id, it.origin_id, it.parent_id, it.relation_type);
             }
         } else {
             addNewItem();
@@ -187,6 +187,11 @@ async function saveToBackend() {
         const tagSpans = Array.from(card.querySelectorAll('.tag-text'));
         return {
             item_id: card.getAttribute('data-id'),
+            // 讀取隱藏在 DOM 中的進化樹數據
+            origin_id: card.getAttribute('data-origin-id') || null,
+            parent_id: card.getAttribute('data-parent-id') || null,
+            relation_type: card.getAttribute('data-relation-type') || null,
+
             title: card.querySelector('.project-title').value.trim(),
             tags: tagSpans.map(s => s.innerText).join(' '),
             content: card.querySelector('textarea').value.trim(),
@@ -202,18 +207,40 @@ async function saveToBackend() {
     } catch (e) { updateStatus('error'); }
 }
 
-async function addNewItem(title = "", content = "", isDone = false, tags = "", itemId = null) {
+// ✅ 升級：addNewItem 整合 DNA 按鈕與進化圖標
+async function addNewItem(title = "", content = "", isDone = false, tags = "", itemId = null, originId = null, parentId = null, relationType = null) {
     const uid = itemId || generateUUID();
     const itemDiv = document.createElement('div');
     itemDiv.setAttribute('data-id', uid);
+
+    // 將進化樹數據寫入 DOM (隱藏屬性)
+    if (originId) itemDiv.setAttribute('data-origin-id', originId);
+    if (parentId) itemDiv.setAttribute('data-parent-id', parentId);
+    if (relationType) itemDiv.setAttribute('data-relation-type', relationType);
+
     itemDiv.className = `group task-card relative ${isDone ? 'completed' : ''}`;
+
+    // 1. 定義進化圖標 (Evolve / Inherit)
+    const evolutionIcon = relationType === 'evolve' ? '<i class="fa-solid fa-shuttle-space text-amber-400 text-xs ml-2" title="New Milestone"></i>' :
+                          relationType === 'inherit' ? '<i class="fa-solid fa-arrow-turn-up text-blue-300 text-xs ml-2" title="Inherited"></i>' : '';
+
+    // 2. 定義 DNA 按鈕：只有當有 originId 時才顯示，點擊召喚專案地圖
+    const dnaBtn = originId ?
+        `<button onclick="openProjectMap('${originId}')" class="ml-2 w-6 h-6 rounded-full bg-blue-50 text-blue-400 hover:bg-blue-500 hover:text-white flex items-center justify-center transition-all text-[10px] shadow-sm opacity-60 hover:opacity-100" title="View Project DNA">
+            <i class="fa-solid fa-dna"></i>
+         </button>` : '';
 
     itemDiv.innerHTML = `
         <div class="flex items-start gap-4 h-full">
             <div class="drag-handle mt-2 text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing"><i class="fa-solid fa-grip-lines"></i></div>
 
             <div class="flex-grow min-w-0 flex flex-col justify-center">
-                <input type="text" value="${title}" placeholder="What to focus on?" class="project-title w-full font-black text-gray-800 border-none focus:ring-0 p-0 bg-transparent text-xl tracking-tight placeholder-gray-300">
+                <div class="flex items-center">
+                    <input type="text" value="${title}" placeholder="What to focus on?" class="project-title w-full font-black text-gray-800 border-none focus:ring-0 p-0 bg-transparent text-xl tracking-tight placeholder-gray-300">
+
+                    ${dnaBtn}
+                    ${title ? evolutionIcon : ''}
+                </div>
 
                 <div class="tag-container mt-2">
                     <i class="fa-solid fa-hashtag text-[10px] text-gray-300 mr-1"></i>
@@ -309,6 +336,7 @@ function closeDrawer() {
     document.getElementById('drawer-overlay').classList.add('pointer-events-none');
 }
 
+// 歷史抽屜加入「轉職 (Evolve)」按鈕
 async function refreshHistoryFeed() {
     const feed = document.getElementById('history-feed');
     feed.innerHTML = '<div class="text-center py-20"><i class="fa-solid fa-spinner fa-spin text-gray-200"></i></div>';
@@ -329,6 +357,11 @@ async function refreshHistoryFeed() {
                         `<span class="bg-blue-50 text-blue-300 text-[9px] px-1.5 py-0.5 rounded-md mr-1">#${t}</span>`
                     ).join('') : '';
 
+                    const safeTitle = it.title.replace(/'/g, "\\'");
+                    const safeTags = it.tags || "";
+                    const itemId = it.item_id;
+                    const originId = it.origin_id || it.item_id;
+
                     task.innerHTML = `
                         <div class="flex items-start gap-3">
                             <div class="mt-1">${it.isDone ? '<i class="fa-solid fa-circle-check text-green-400"></i>' : '<i class="fa-solid fa-circle-dot text-amber-300"></i>'}</div>
@@ -338,9 +371,13 @@ async function refreshHistoryFeed() {
                                 ${it.content ? `<div class="mt-3 text-xs text-gray-400 leading-relaxed italic">${it.content.replace(/\n/g, '<br>')}</div>` : ''}
                             </div>
                         </div>
-                        <div class="opacity-0 group-hover/hist:opacity-100 absolute -right-2 -top-2 transition-all scale-90 hover:scale-100">
-                             <button onclick=\"continueTask('${it.title.replace(/'/g, "\\'")}', '${it.tags}')\" class=\"bg-blue-600 text-white text-[10px] px-3 py-2 rounded-xl shadow-lg font-bold uppercase tracking-wide cursor-pointer flex items-center gap-1\">
-                                <i class=\"fa-solid fa-arrow-turn-up\"></i> Continue
+
+                        <div class="opacity-0 group-hover/hist:opacity-100 absolute -right-2 -top-2 transition-all scale-90 hover:scale-100 flex gap-2">
+                             <button onclick="evolveTask('${safeTitle}', '${safeTags}', '${itemId}', '${originId}')" class="bg-amber-400 text-white text-[10px] px-3 py-2 rounded-xl shadow-lg font-bold uppercase tracking-wide cursor-pointer flex items-center gap-1 hover:bg-amber-500" title="Start new milestone">
+                                <i class="fa-solid fa-shuttle-space"></i>
+                             </button>
+                             <button onclick="continueTask('${safeTitle}', '${safeTags}', '${itemId}', '${originId}')" class="bg-blue-600 text-white text-[10px] px-3 py-2 rounded-xl shadow-lg font-bold uppercase tracking-wide cursor-pointer flex items-center gap-1 hover:bg-blue-700" title="Continue project">
+                                <i class="fa-solid fa-arrow-turn-up"></i>
                              </button>
                         </div>`;
                     section.appendChild(task);
@@ -351,8 +388,14 @@ async function refreshHistoryFeed() {
     } catch (e) { feed.innerHTML = "Error loading history"; }
 }
 
-function continueTask(t, tags) {
-    addNewItem(t, "", false, tags);
+function continueTask(t, tags, srcId, srcOrigin) {
+    addNewItem(t, "", false, tags, null, srcOrigin, srcId, 'inherit');
+    closeDrawer();
+    triggerAutoSave();
+}
+
+function evolveTask(t, tags, srcId, srcOrigin) {
+    addNewItem(t, "", false, tags, null, srcOrigin, srcId, 'evolve');
     closeDrawer();
     triggerAutoSave();
 }
